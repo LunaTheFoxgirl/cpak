@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GO_PATH="$(dirname $(readlink -f $0))"
+export GOPATH="$(dirname $(readlink -f $0))"
 echo "Getting grab..."
 go get github.com/cavaliercoder/grab
 echo "Getting resty..."
