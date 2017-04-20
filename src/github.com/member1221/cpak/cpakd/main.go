@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"sync"
 	"strings"
+	"strconv"
 )
 
 var CONFIGDIR string = libcpak.CPAK_DEFAULT_CFG_DIR
@@ -53,8 +54,9 @@ func main() {
 		libcpak.PushLog(0, "Added repo handler...")
 		http.HandleFunc("/cpak/repo/", handlerepo)
 
-		libcpak.PushLog(0, "Serving on port 80...")
-		http.ListenAndServe(":80", nil)
+		port := strconv.Itoa(DEFAULT_PORT)
+		libcpak.PushLog(0, "Serving on port " + port + "...")
+		http.ListenAndServe(":" + port, nil)
 	}()
 	for running {
 		if libcpak.LogLen(0) > 0 {
@@ -121,7 +123,7 @@ func handlerepolist(w http.ResponseWriter, r *http.Request) {
 	} else {
 		output, err = json.Marshal(libcpak.WebError {
 			"Invalid package parameter",
-			124,
+			404,
 		})
 		if err != nil {
 			libcpak.PushLog(0, "[Error (Package Listing)] "+err.Error())
@@ -133,5 +135,6 @@ func handlerepolist(w http.ResponseWriter, r *http.Request) {
 
 
 func handlerepo(w http.ResponseWriter, r *http.Request) {
-
+	pack := r.FormValue("pkg")
+	version := r.FormValue("ver")
 }

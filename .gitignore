@@ -8,9 +8,9 @@ _obj
 _test
 test/*
 bin/*
-src/golang.org
-src/github.com/cavaliercoder
-src/github.com/go-resty
+src/golang.org/
+src/github.com/cavaliercoder/
+src/github.com/go-resty/
 src/github.com/kardianos/
 
 # Architecture specific extensions/prefixes
