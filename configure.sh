@@ -9,4 +9,6 @@ echo "Getting osext..."
 go get github.com/kardianos/osext
 echo "Getting net..."
 go get golang.org/x/net
+echo "Getting gopher-lua..."
+go get github.com/yuin/gopher-lua
 echo "Done!"

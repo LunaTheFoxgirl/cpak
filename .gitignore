@@ -12,6 +12,7 @@ src/golang.org/
 src/github.com/cavaliercoder/
 src/github.com/go-resty/
 src/github.com/kardianos/
+src/github.com/yuin/
 
 # Architecture specific extensions/prefixes
 *.[568vq]
