@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"github.com/cavaliercoder/grab"
 	"strconv"
+	"encoding/binary"
+	"archive/tar"
+	"compress/gzip"
 )
 
 var pkgcachefile string = "cpakcache.json"
@@ -16,9 +19,95 @@ type Package struct {
 	Name         	string `json:"name"`
 	Origin       	string `json:"origin"`
 	Version      	Version `json:"version"`
-	Files 	     	[]string `json:"files"`
+	Files 	     	map[string]string `json:"files"`
 	Dependencies 	[]Package `json:"dependencies"`
 	PreDependencies []Package `json:"pre-dependencies"`
+}
+
+func (pk Package) Install() {
+	sep := PATH_SEP
+	root := PATH_ROOT
+
+}
+
+func PreparePackageInstallation(file string) (PackageFile, error) {
+	sep := PATH_SEP
+	root := PATH_ROOT
+	var err error
+	var fl PackageFile = PackageFile{}
+	var pk Package
+	//If package file exists
+	if _, err = os.Stat(file); err == nil {
+		file, err := os.Open(file)
+		if err != nil {
+			return PackageFile{}, err
+		}
+		defer file.Close()
+
+		//Check for magic bytes of "CPAK"
+		b := make([]byte, len([]byte("CPAK")))
+		file.Read(b)
+		headerdef := string(b)
+		if headerdef != "CPAK" {
+			return PackageFile{}, errors.New("File " + file.Name() + " not an cpak package! (Invalid magic bytes)")
+		}
+
+		//Get length of and unmarshal json header
+		b = make ([]byte, binary.MaxVarintLen64)
+		file.Read(b)
+		rlen := binary.BigEndian.Uint64(b)
+		b = make([]byte, rlen)
+		file.Read(b)
+
+		err = json.Unmarshal(b, pk)
+		if err != nil {
+			return PackageFile{}, errors.New("File " + file.Name() + " not an cpak package! (Unable to unmarshal header)")
+		}
+		fl.Header = pk
+
+		//Get prerecipe lua script
+		b = make ([]byte, binary.MaxVarintLen64)
+		file.Read(b)
+		rlen = binary.BigEndian.Uint64(b)
+		if rlen > 0 {
+			b = make([]byte, rlen)
+			file.Read(b)
+			fl.PreRecipe = b
+		}
+
+		//Get postrecipe lua script
+		b = make ([]byte, binary.MaxVarintLen64)
+		file.Read(b)
+		rlen = binary.BigEndian.Uint64(b)
+		if rlen > 0 {
+			b = make([]byte, rlen)
+			file.Read(b)
+			fl.PostRecipe = b
+		}
+
+		//Extract gzip tar archive to /tmp for installation
+		b = make ([]byte, binary.MaxVarintLen64)
+		file.Read(b)
+		rlen = binary.BigEndian.Uint64(b)
+		b = make([]byte, rlen)
+		file.Read(b)
+		gr, err := gzip.NewReader(file)
+		if err != nil {
+			return PackageFile{}, errors.New("File " + file.Name() + " not an cpak package! (Invalid gzip container)")
+		}
+		defer gr.Close()
+		Untar(tar.NewReader(gr), root + "tmp" + sep + fl.Header.Name)
+		fl.TmpFiles = root + "tmp" + sep + fl.Header.Name
+		return fl, nil
+	}
+	return PackageFile{}, err
+}
+
+type PackageFile struct {
+	Header Package
+	TmpFiles string
+	PreRecipe []byte
+	PostRecipe []byte
 }
 
 type WebPackage struct {

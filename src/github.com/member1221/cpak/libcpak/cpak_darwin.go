@@ -7,6 +7,9 @@ const (
 	CPAK_DEFAULT_REPO_NAME = "Server ECLIPSED_TIDES"
 	//Yes, the default port is 1337, live with it.
 	CPAK_DEFAULT_SERVE_PORT = 1337
+
+	PATH_SEP = "\\"
+	PATH_ROOT = "C:"
 )
 
 func CPAK_DEFAULT_REPO_CATS() []string {
