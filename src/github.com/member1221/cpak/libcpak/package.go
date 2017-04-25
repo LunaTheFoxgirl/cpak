@@ -311,7 +311,7 @@ func DownloadPackage(pkg Package) (Package, error) {
 	_, err := grab.NewRequest(pkg.Origin)
 	if !grab.IsBadDestination(err) {
 		PushLog(0, "Downloading package "+pkg.Name+"...")
-		p, err := grab.GetAsync("tmp/cpak/"+pkg.Name+".cpak", pkg.Origin)
+		p, err := grab.GetAsync("/tmp/" + pkg.Name + ".cpak", pkg.Origin)
 		if err != nil {
 			return Package{}, nil
 		}
