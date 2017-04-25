@@ -35,7 +35,7 @@ func main() {
 	file, err := ioutil.ReadFile(CONFIGDIR+"/server.json")
 
 	if err != nil {
-		config = ServerConfig{DEFAULT_NAME, DEFAULT_SERVEDIR, DEFAULT_CATEGORIES}
+		config = ServerConfig{DEFAULT_NAME, DEFAULT_PORT, DEFAULT_SERVEDIR, libcpak.MakeVersion(0, 0, 0), DEFAULT_CATEGORIES}
 	} else {
 		err := json.Unmarshal([]byte(file), config)
 		if err != nil {
@@ -52,7 +52,7 @@ func main() {
 		http.HandleFunc("/cpak/repolist", handlerepolist)
 
 		libcpak.PushLog(0, "Added repo handler...")
-		http.HandleFunc("/cpak/repo/", handlerepo)
+		http.HandleFunc("/cpak/repo", handlerepo)
 
 		port := strconv.Itoa(DEFAULT_PORT)
 		libcpak.PushLog(0, "Serving on port " + port + "...")
@@ -97,6 +97,14 @@ func updatepkglist (){
 
 		}
 	}
+	MTX.Lock()
+	config.Categories = make([]string, 0)
+	for cat, _ := range CATEGORIES {
+		fmt.Println("Added category folder " + cat + " to config.")
+		config.Categories = append(config.Categories, cat)
+	}
+	config.Version = libcpak.AdvanceVersion(config.Version)
+	MTX.Unlock()
 }
 
 func handlerepolist(w http.ResponseWriter, r *http.Request) {
@@ -137,4 +145,32 @@ func handlerepolist(w http.ResponseWriter, r *http.Request) {
 func handlerepo(w http.ResponseWriter, r *http.Request) {
 	pack := r.FormValue("pkg")
 	version := r.FormValue("ver")
+	option := r.FormValue("o")
+	if pack == "" && version == "" {
+		var output []byte
+		var err error
+		if option == "list" {
+			output, err = json.MarshalIndent(APPS, "", "\t")
+			if err != nil {
+				fmt.Println(err.Error())
+				output, err = json.Marshal(libcpak.WebError{
+					err.Error(),
+					-1,
+				})
+			}
+		} else {
+			MTX.Lock()
+			rep := libcpak.Repository{config.Name, strconv.Itoa(config.Port), config.Version}
+			output, err = json.MarshalIndent(rep, "", "\t")
+			if err != nil {
+				fmt.Println(err.Error())
+				output, err = json.Marshal(libcpak.WebError{
+					err.Error(),
+					-1,
+				})
+			}
+			MTX.Unlock()
+		}
+		w.Write([]byte(output))
+	}
 }

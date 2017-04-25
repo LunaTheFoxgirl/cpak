@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
+	fmt "fmt"
 	"github.com/member1221/cpak/libcpak"
 	"os"
-	"sync"
-	"bufio"
 	"strings"
+	"sync"
 )
 
-var VERSION libcpak.Version = libcpak.MakeVersion(0,1,0)
+var VERSION libcpak.Version = libcpak.MakeVersion(0, 1, 0)
 
 var CONFIGLOCATION string = libcpak.CPAK_DEFAULT_CFG_DIR
 
@@ -26,11 +26,15 @@ var HELPTEXT string = "Arguments:\n" +
 
 func main() {
 	fmt.Println("[CPAK PAcKager " + VERSION.ToString() + "]")
-	if os.Geteuid() == 0 {
-		args := os.Args[1:]
-		if args != nil && len(args) > 0 {
-			action := args[0]
+	args := os.Args[1:]
+	if args != nil && len(args) > 0 {
+		action := args[0]
+		if action == "list" {
 
+		} else if action == "help" || action == "-h" {
+			fmt.Println(HELPTEXT)
+		}
+		if os.Geteuid() == 0 {
 			if action == "gencache" {
 				fmt.Println("Generating a new application cache...")
 				libcpak.ClearPackageCache()
@@ -39,17 +43,40 @@ func main() {
 					fmt.Println("[Error] " + err.Error())
 				}
 				//TODO: Generate cache
-				return;
+				return
 			} else if action == "repo" {
-				if (len(args) > 1) {
+				if len(args) > 1 {
 					action2 := args[1]
+					libcpak.LoadRepoCache(CONFIGLOCATION)
 					if action2 == "generate" {
 						libcpak.SaveRepoCache(CONFIGLOCATION)
 						return
-					} else if action2 == "add" {
-
+					}
+					if action2 == "add" {
+						if len(args) > 2 {
+							r, org ,err := libcpak.FetchRepo(args[2])
+							if err != nil {
+								fmt.Println("ERROR: " + err.Error())
+								return
+							}
+							r.Origin = org
+							libcpak.AddRepoToCache(r)
+							err = libcpak.SaveRepoCache(CONFIGLOCATION)
+							if err != nil {
+								fmt.Println(err)
+								return
+							}
+							fmt.Println("Repository " + r.Name + " added!")
+							return
+						} else {
+							fmt.Println("No repository server linked.")
+							return
+						}
 					} else if action2 == "remove" {
-
+						if len(args) > 2 {
+						} else {
+							fmt.Println("No repository chosen.")
+						}
 					}
 				}
 				fmt.Println("No repository action was defined!\n" +
@@ -57,7 +84,7 @@ func main() {
 					"	generate - Generate a new repository list.\n" +
 					"	add (repository) - Add a repository to the list.\n" +
 					"	remove (repository) - Remove a repository from the list.")
-				return;
+				return
 			}
 
 			err := libcpak.LoadPackageCache(CONFIGLOCATION)
@@ -66,7 +93,7 @@ func main() {
 			}
 
 			err = libcpak.LoadRepoCache(CONFIGLOCATION)
-			if err != nil && err.Error() != "unexpected end of JSON input"  {
+			if err != nil && err.Error() != "unexpected end of JSON input" {
 				fmt.Println("\n[Error] " + err.Error())
 			}
 
@@ -77,7 +104,6 @@ func main() {
 					return
 				}
 				fmt.Println("No applications specified to install!")
-
 
 			} else if action == "pull" {
 				//TODO: If needed in future, this will pull repo updates.
@@ -105,17 +131,16 @@ func main() {
 
 				}
 				fmt.Println("No applications specified to nuke!")
-			} else if action == "help" || action == "-h" {
-				fmt.Println(HELPTEXT)
 			} else {
 				fmt.Println("Invalid argument " + action + "!\n\nRun [cpak help] for help.")
 			}
 			return
+		} else {
+			fmt.Println("Please run CPAK as root/administrator.")
+			return
 		}
-	} else {
-		fmt.Println("Please run CPAK as root/administrator.")
-		return
 	}
+
 	fmt.Println("No arguments was passed!\n\n" + HELPTEXT)
 }
 
@@ -132,7 +157,7 @@ func handleInstall(apps []string) {
 	for _, pkg := range pkgs {
 		p, d, err := libcpak.RequestPackageDependancies(pkg, predependancies, dependancies)
 		if err != nil {
-			return;
+			return
 		}
 		predependancies = append(predependancies, p...)
 		dependancies = append(dependancies, d...)
@@ -140,7 +165,7 @@ func handleInstall(apps []string) {
 
 	if len(pkgs) == 0 {
 		fmt.Println("Requested package(s) was not found in repositories, sorry.")
-		return;
+		return
 	}
 
 	fmt.Println("Here's the packages you'll install:\n\nPackages:")
@@ -162,7 +187,6 @@ func handleInstall(apps []string) {
 		}
 	}
 
-
 	done := false
 	go func() {
 		for _, dep := range predependancies {
@@ -182,7 +206,7 @@ func handleInstall(apps []string) {
 				mut.Unlock()
 
 			}()
-			for (i >= max) {
+			for i >= max {
 				//Wait...
 			}
 		}
@@ -200,7 +224,7 @@ func handleInstall(apps []string) {
 				mut.Unlock()
 
 			}()
-			for (i >= max) {
+			for i >= max {
 				//Wait...
 			}
 		}
@@ -208,7 +232,7 @@ func handleInstall(apps []string) {
 	}()
 	for !done {
 		if libcpak.LogLen(0) > 0 {
-			fmt.Println(libcpak.PullLog(0));
+			fmt.Println(libcpak.PullLog(0))
 		}
 	}
 	return

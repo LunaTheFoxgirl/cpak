@@ -24,11 +24,7 @@ type Package struct {
 	PreDependencies []Package `json:"pre-dependencies"`
 }
 
-func (pk Package) Install() {
-	sep := PATH_SEP
-	root := PATH_ROOT
 
-}
 
 func PreparePackageInstallation(file string) (PackageFile, error) {
 	sep := PATH_SEP
@@ -228,7 +224,7 @@ func PackageListToString(pkgs []Package, verbosity int) (string, string, string)
 
 func RequestPackages(pkgs []string) []Package {
 	var found []Package = make([]Package, 0)
-	for _, r := range GetCache() {
+	for _, r := range *GetCache() {
 		for _, pkg := range pkgs {
 			if !PkgListContainsName(found, pkg) {
 				pakg, err := r.RequestPackage(pkg)
@@ -251,7 +247,7 @@ func RequestPackageDependancies(rootPackage Package, preprecache []Package, prec
 	length := len(rootPackage.Dependencies) + len(rootPackage.PreDependencies)
 	pre := false
 	got := 0
-	for _, r := range GetCache() {
+	for _, r := range *GetCache() {
 		if got >= length {
 			break
 		}
