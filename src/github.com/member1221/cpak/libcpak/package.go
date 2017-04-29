@@ -15,16 +15,19 @@ import (
 var pkgcachefile string = "cpakcache.json"
 var pkgcache map[string]Package
 
+type pkgtype int
+
+var PKG_TYPE_EXE pkgtype = 0
+var PKG_TYPE_LIB pkgtype = 1
+
 type Package struct {
 	Name         	string `json:"name"`
 	Origin       	string `json:"origin"`
 	Version      	Version `json:"version"`
 	Files 	     	map[string]string `json:"files"`
 	Dependencies 	[]Package `json:"dependencies"`
-	PreDependencies []Package `json:"pre-dependencies"`
+	Type		pkgtype
 }
-
-
 
 func PreparePackageInstallation(file string) (PackageFile, error) {
 	sep := PATH_SEP
@@ -324,7 +327,7 @@ func DownloadPackage(pkg Package) (Package, error) {
 		}
 		PushLog(0, "["+pkg.Name+"] Package download completed.")
 	}
-	return Package{}, errors.New("Package not found!\n\n" +
+	return Package{}, errors.New(Translate("pkgNotFound", "Package not found!\n\n" +
 		"If you want package " + pkg.Name + " to exist, try creating a cpak package for the application.\n" +
-		"Or run cpak list to see a list of applications.")
+		"Or run cpak list to see a list of applications."))
 }

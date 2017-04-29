@@ -25,7 +25,8 @@ var HELPTEXT string = "Arguments:\n" +
 	"	updates - Combined with [install], installs updates to all applications if found.\n"
 
 func main() {
-	fmt.Println("[CPAK PAcKager " + VERSION.ToString() + "]")
+	libcpak.LoadLang("da")
+	fmt.Println(libcpak.Translate("cpakSplash", "[CPAK PAcKager " + VERSION.ToString() + "]"))
 	args := os.Args[1:]
 	if args != nil && len(args) > 0 {
 		action := args[0]
@@ -36,7 +37,7 @@ func main() {
 		}
 		if os.Geteuid() == 0 {
 			if action == "gencache" {
-				fmt.Println("Generating a new application cache...")
+				fmt.Println(libcpak.Translate("cpakCacheGen","Generating a new application cache..."))
 				libcpak.ClearPackageCache()
 				err := libcpak.SavePackageCache(CONFIGLOCATION)
 				if err != nil {
@@ -103,7 +104,7 @@ func main() {
 					handleInstall(args[1:])
 					return
 				}
-				fmt.Println("No applications specified to install!")
+				fmt.Println(libcpak.Translate("cpakErrNoAppSpecified", "No applications specified to install!"))
 
 			} else if action == "pull" {
 				//TODO: If needed in future, this will pull repo updates.
@@ -177,7 +178,7 @@ func handleInstall(apps []string) {
 	cont := false
 	for !cont {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Printf("Are you sure you want these packages installed? [Y/N] ")
+		fmt.Printf(libcpak.Translate("pkgInstallSure", "Are you sure you want these packages installed? [Y/N] "))
 		text, _ := reader.ReadString('\n')
 		if strings.ToLower(text[:1]) == "y" {
 			cont = true
